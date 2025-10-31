@@ -10,18 +10,12 @@ JUDGE0_URL = "http://judge.darlon.com.br"
 # Código Python a ser executado
 source_code = """
 print(input())
-
-# val_a = int(input())
-# val_b = int(input())
-# val_soma - val_a = val_b
-# print(f"{val_a} + {val_b} = {val_soma}")
+#eu quero digitar o código que eu preciso, no frontEnd (como se fosse um input)
 """
 
 # Entrada padrão (stdin)
-stdin = """\
-5
-10\
-"""
+stdin = """ ... """
+#aqui eu vou colocar os valores
 
 
 # Converter ambos para Base64

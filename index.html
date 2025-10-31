@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Executor de Código (Direto)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="col">
+            <h2>Código Fonte</h2>
+            <select id="language_id">
+                <option value="71">Python (3.8.1)</option>
+                <option value="93">JavaScript (Node.js 18.15.0)</option>
+                <option value="50">C (GCC 9.2.0)</option>
+            </select>
+            <textarea id="source_code" rows="15">print("Olá, mundo!")</textarea>
+            
+            <h2>Entrada (stdin)</h2>
+            <textarea id="stdin" rows="5"></textarea>
+            
+            <button id="runButton">Executar</button>
+        </div>
+        <div class="col">
+            <h2>Saída</h2>
+            <pre id="output">Os resultados aparecerão aqui...</pre>
+        </div>
+    </div>
+
+    <script>
+        const runButton = document.getElementById('runButton');
+        const outputEl = document.getElementById('output');
+        const sourceCodeEl = document.getElementById('source_code');
+        const stdinEl = document.getElementById('stdin');
+        const languageIdEl = document.getElementById('language_id');
+
+        // A URL direta do Judge0
+        const JUDGE0_URL = "http://judge.darlon.com.br";
+
+        runButton.addEventListener('click', async () => {
+            outputEl.textContent = 'Enviando direto para o Judge0...';
+
+            // 1. Pegar os dados dos inputs
+            const source_code = sourceCodeEl.value;
+            const stdin = stdinEl.value;
+            const language_id = parseInt(languageIdEl.value, 10);
+
+            // 2. Converter para Base64 (JavaScript faz isso com btoa())
+            const encoded_source = btoa(unescape(encodeURIComponent(source_code)));
+            const encoded_stdin = btoa(unescape(encodeURIComponent(stdin)));
+            
+            // 3. Montar o Payload (igual ao do Python)
+            const payload = {
+                source_code: encoded_source,
+                language_id: language_id,
+                stdin: encoded_stdin,
+                base64_encoded: true,
+                wait: true
+            };
+
+            try {
+                // 4. Enviar a submissão (igual ao do Python)
+                const response = await fetch(`${JUDGE0_URL}/submissions?base64_encoded=true&wait=true`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // 5. Decodificar a resposta (JavaScript faz isso com atob())
+                const stdout = result.stdout ? decodeURIComponent(escape(atob(result.stdout))) : "";
+                const stderr = result.stderr ? decodeURIComponent(escape(atob(result.stderr))) : "";
+                const status = result.status.description;
+
+                // 6. Mostrar o resultado
+                outputEl.textContent = `Status: ${status}\n\nSaída:\n${stdout}\n\nErros:\n${stderr}`;
+
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                
+                // !!!!!!! O ERRO VAI ACONTECER AQUI !!!!!!!
+                outputEl.textContent = `ERRO: ${error.message}\n\n`;
+                outputEl.textContent += "Isso quase certamente é um erro de 'CORS'.\n\n";
+                outputEl.textContent += "O servidor 'judge.darlon.com.br' está BLOQUEANDO requisições vindas direto do seu navegador.\n\n";
+                outputEl.textContent += "É POR ISSO que você precisa do 'servidor.py' (com Flask) para fazer a 'ponte' entre o navegador e o Judge0.";
+            }
+        });
+    </script>
+</body>
+</html>
