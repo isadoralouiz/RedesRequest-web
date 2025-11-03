@@ -17,93 +17,10 @@ body {
     margin: 0;
     padding: 20px;
 }
-
-.container {
-    display: flex;
-    gap: 20px;
-}
-
-.col {
-    flex: 1;
-}
-
-h2 {
-    color: var(--primary-blue);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 5px;
-}
-
-textarea,
-select {
-    width: 100%;
-    min-height: 200px;
-    box-sizing: border-box; /* Garante que o padding não quebre o layout */
-    background-color: var(--input-bg);
-    color: var(--text-light);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
-    font-family: "Consolas", "Monaco", monospace;
-    font-size: 14px;
-}
-
-select {
-    min-height: auto;
-    margin-bottom: 10px;
-    font-family: inherit; /* Usa a fonte do body */
-    font-size: 16px;
-}
-
-textarea#stdin {
-    min-height: 100px;
-}
-
-button {
-    background-color: var(--primary-blue);
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 10px;
-}
-
-button:hover {
-    opacity: 0.9;
-}
-
-/* --- Saída --- */
-pre#output {
-    background-color: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 15px;
-    min-height: 350px;
-    white-space: pre-wrap; /* Quebra linha na saída */
-    font-family: "Consolas", "Monaco", monospace;
-    color: var(--text-light); /* Cor padrão do texto de saída */
-}
-
-/* --- ESTILOS DE SAÍDA (O que faltava) --- */
-
-/* Cor para Status de Sucesso */
-.status-success {
-    color: var(--success-green);
-    font-weight: bold;
-}
-
-/* Cor para Status de Erro */
-.status-error {
-    color: var(--error-red);
-    font-weight: bold;
-}
-
-/* Cor para os Rótulos (Saída/Erro) */
+/* ... (todo o resto do seu CSS) ... */
 .output-label {
     color: var(--text-gray);
     font-weight: bold;
-    display: block; /* Faz pular uma linha */
-    margin-top: 10px;}
+    display: block;
+    margin-top: 10px;
+}
