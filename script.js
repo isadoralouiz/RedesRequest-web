@@ -1,85 +1,94 @@
-document.addEventListener('DOMContentLoaded', () => {
+// Espera o HTML ser carregado antes de rodar
+document.addEventListener("DOMContentLoaded", () => {
 
-    // 1. Seleciona todos os elementos do HTML
-    const runButton = document.getElementById('runButton');
-    const sourceCodeElem = document.getElementById('sourceCode');
-    const stdinElem = document.getElementById('stdin');
-    const languageSelectElem = document.getElementById('languageSelect');
-    const outputElement = document.getElementById('output');
+    // Pega os elementos do HTML pelos seus IDs
+    const runButton = document.getElementById("runButton");
+    const sourceCodeEl = document.getElementById("sourceCode");
+    const stdinEl = document.getElementById("stdin");
+    const langSelectEl = document.getElementById("languageSelect");
+    const outputEl = document.getElementById("output");
 
-    // 2. Adiciona o "ouvinte" de clique no botão
-    runButton.addEventListener('click', async () => {
+    // O endereço da API
+    // const JUDGE0_URL = "https://judge.darlon.com.br"; // <-- LINHA ORIGINAL (COM ERRO)
+    
+    // CORREÇÃO: Usar um proxy CORS para "consertar" o cabeçalho de permissão
+    const JUDGE0_URL = "https://corsproxy.io/?https://judge.darlon.com.br";
+
+    // Função que será chamada quando o botão for clicado
+    const runCode = async () => {
         
-        // 3. Pega os valores dos campos QUANDO o botão é clicado
-        const sourceCode = sourceCodeElem.value;
-        const stdin = stdinElem.value;
-        const languageId = languageSelectElem.value;
+        // 1. Pegar os valores dos campos
+        const source_code = sourceCodeEl.value;
+        const stdin = stdinEl.value;
+        const language_id = parseInt(langSelectEl.value, 10); // Converte para número
 
-        // 4. Mostra uma mensagem de "Executando..."
-        outputElement.innerHTML = '<span class="output-label">Executando...</span>';
+        if (!source_code) {
+            outputEl.textContent = "Por favor, digite algum código para executar.";
+            return;
+        }
+
+        // 2. Mostrar mensagem de "carregando" e desabilitar o botão
+        outputEl.textContent = "Executando... por favor, aguarde.";
+        runButton.disabled = true;
 
         try {
-            // 5. Envia os dados para o seu 'servidor.py' (a "ponte")
-            const response = await fetch('http://127.0.0.1:5000/execute', {
-                method: 'POST',
+            // 3. Converter para Base64 (btoa é a função do JavaScript para isso)
+            //    O truque unescape(encodeURIComponent(...)) é para lidar com UTF-8
+            const encoded_source = btoa(unescape(encodeURIComponent(source_code)));
+            const encoded_stdin = btoa(unescape(encodeURIComponent(stdin)));
+
+            // 4. Montar o payload (igual ao do script Python)
+            const payload = {
+                source_code: encoded_source,
+                language_id: language_id,
+                stdin: encoded_stdin,
+                base64_encoded: true,
+                wait: true
+            };
+
+            // 5. Enviar a requisição (fetch é o 'requests.post' do JavaScript)
+            const response = await fetch(`${JUDGE0_URL}/submissions?base64_encoded=true&wait=true`, {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    source_code: sourceCode,
-                    stdin: stdin,
-                    language_id: parseInt(languageId, 10) // Converte o ID para número
-                })
+                body: JSON.stringify(payload)
             });
 
-            // 6. Recebe a resposta do 'servidor.py'
+            if (!response.ok) {
+                // Pega a mensagem de erro da API se algo der errado
+                const errorData = await response.json();
+                throw new Error(`Erro na API: ${response.status} - ${errorData.error || response.statusText}`);
+            }
+
+            // 6. Pegar o resultado
             const result = await response.json();
 
-            // 7. Formata a resposta e exibe no <pre id="output">
-            let htmlOutput = '';
-            
-            // Define a cor do status (verde para sucesso, vermelho para erro)
-            const statusClass = (result.status === "Accepted") ? 'status-success' : 'status-error';
-            
-            // Adiciona o Status
-            htmlOutput += `<strong>Status: </strong><span class="${statusClass}">${result.status}</span><br>`;
+            // 7. Decodificar a saída (atob é a função do JavaScript para isso)
+            //    ARQUIVADO: Precisamos de decodeURIComponent(escape(...)) para lidar com UTF-8
+            const stdout = result.stdout ? decodeURIComponent(escape(atob(result.stdout))) : "";
+            const stderr = result.stderr ? decodeURIComponent(escape(atob(result.stderr))) : "";
+            const status = result.status.description;
 
-            // Adiciona a Saída Padrão (stdout), se existir
-            if (result.stdout) {
-                htmlOutput += `<strong class="output-label">Saída Padrão:</strong>`;
-                const escapedStdout = escapeHTML(result.stdout);
-                htmlOutput += `<span style="color: var(--text-light);">${escapedStdout}</span>`;
+            // 8. Montar e exibir a saída formatada
+            let output = `Status: ${status}\n\n--- Saída Padrão (stdout) ---\n${stdout}`;
+
+            if (stderr) {
+                output += `\n\n--- Erros (stderr) ---\n${stderr}`;
             }
 
-            // Adiciona Erros (stderr), se existir
-            if (result.stderr) {
-                htmlOutput += `<strong class="output-label">Erros:</strong>`;
-                const escapedStderr = escapeHTML(result.stderr);
-                htmlOutput += `<span class="status-error">${escapedStderr}</span>`;
-            }
-            
-            // Coloca o HTML formatado dentro da caixa de saída
-            outputElement.innerHTML = htmlOutput;
+            outputEl.textContent = output;
 
         } catch (error) {
-            // 8. Se a conexão com o 'servidor.py' falhar
-            outputElement.innerHTML = `<span class="status-error">Erro ao conectar com o servidor: ${error.message}.<br>Verifique se o 'servidor.py' está rodando no seu terminal.</span>`;
+            // Lidar com qualquer erro (de rede, da API, etc.)
+            console.error("Falha ao executar:", error);
+            outputEl.textContent = `Erro: ${error.message}.\n\nVerifique sua conexão ou o console do navegador (F12) para mais detalhes.`;
+        } finally {
+            // 9. Re-abilitar o botão, não importa se deu certo ou errado
+            runButton.disabled = false;
         }
-    });
+    };
 
-    /**
-     * Função de segurança para "escapar" o HTML.
-     * Isso impede que um código como print("<h1>Olá</h1>")
-     * quebre o layout da sua página.
-     */
-    function escapeHTML(str) {
-        if (typeof str !== 'string') {
-            return '';
-        }
-        return str.replace(/&/g, '&amp;')
-                  .replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;')
-                  .replace(/"/g, '&quot;')
-                  .replace(/'/g, '&#039;');
-    }
+    // "Conecta" a função runCode ao evento de clique do botão
+    runButton.addEventListener("click", runCode);
 });
